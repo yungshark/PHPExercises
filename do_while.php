@@ -1,6 +1,7 @@
 <?php
 
 $a = 0;
+$b = 2;
 do { 
 	echo "$a\n";
 	$a + 2;
@@ -10,3 +11,8 @@ do {
 	echo "$a\n";
 	$a -5;
 } while ($a >= -15)
+
+do {
+	echo "$b\n";
+	$b * $b
+} while ($b < 1000000)
