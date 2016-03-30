@@ -2,11 +2,13 @@
 
 abstract class Model
 {
+    protected $columns = [];
+
     /** @var PDO|null Connection to the database */
-    protected static $dbc = null;
+    protected static $dbc;
 
     /** @var array Database values for a single record. Array keys should be column names in the DB */
-    protected $attributes = array();
+    protected $attributes;
 
     /**
      * Constructor
@@ -15,11 +17,13 @@ abstract class Model
      *
      * $param array $attributes Optional array of database values to initialize the model record with
      */
-    public function __construct(array $attributes = array())
+    public function __construct(array $attributes = array('id' => null))
     {
-        self::dbConnect();
 
         // @TODO: Initialize the $attributes property with the passed value
+        self::dbConnect();
+        $this->attributes = $attributes;
+
 
     }
 
@@ -32,10 +36,11 @@ abstract class Model
     {
         if (!self::$dbc) {
             // @TODO: Connect to database
-            $dbc = new PDO('mysql:host=127.0.0.1;dbname=codeup_test_db', 'vagrant', 'vagrant', 'vagrant');
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::MySQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
+            self::$dbc = new PDO('mysql:host=127.0.0.1;dbname=codeup_test_db', 'vagrant', 'vagrant');
+            // $dbc->setAttribute(
+            // PDO::ERRMODE_EXCEPTION,
+            // PDO::FETCH_ASSOC
+            // );
         }
     }
 
@@ -49,11 +54,7 @@ abstract class Model
     public function __get($name)
     {
         // @TODO: Return the value from attributes for $name if it exists, else return null
-        if(array_key_exists($name, $this->attributes)){
-            return $this->attributes;
-        } else {
-            return null;
-        }
+        return isset($this->attributes[$name]) ? $this->attributes[$name] : null;
     }
 
     /**
@@ -65,20 +66,26 @@ abstract class Model
     public function __set($name, $value)
     {
         // @TODO: Store name/value pair in attributes array
-        $this->attributes[$key] = $value;  
+        $this->attributes[$name] = $value;  
     }
 
     /** Store the object in the database */
     public function save()
     {
         // @TODO: Ensure there are values in the attributes array before attempting to save
-        if(empty($this->attributes['id'])){
+        if (count($this->attributes) < count($this->columns)) {
+            $difference = array_diff($this->columns, array_keys($this->attributes));
+            throw new InvalidArgumentException(
+                "The following missing keys were found: " . implode(', ', $difference)
+            );
+        }
+
+        // @TODO: Call the proper database method: if the `id` is set this is an update, else it is a insert
+        if(!is_null($this->attributes['id'])){
             $this->update();
         } else {
             $this->insert();
         }
-
-        // @TODO: Call the proper database method: if the `id` is set this is an update, else it is a insert
         
     }
 
